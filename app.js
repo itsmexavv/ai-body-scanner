@@ -36,6 +36,7 @@ const medAdvice = document.getElementById('med-advice');
 const hudHrVal = document.getElementById('hud-hr-val');
 const hudSpo2Val = document.getElementById('hud-spo2-val');
 const hudBpVal = document.getElementById('hud-bp-val');
+const flipCameraBtn = document.getElementById('flip-camera-btn');
 
 function addLog(message, type = 'info') {
     const now = Date.now();
@@ -231,21 +232,54 @@ pose.setOptions({
 
 pose.onResults(onResults);
 
-// Initialize WebCam
-const camera = new Camera(videoElement, {
-    onFrame: async () => {
-        await pose.send({image: videoElement});
-    },
-    width: 1280,
-    height: 720
-});
+// Camera State
+let currentFacingMode = 'user';
+let camera = null;
 
-addLog("Initializing camera systems...", "info");
-camera.start().then(() => {
-    addLog("Camera active. Models loaded.", "info");
-}).catch((err) => {
-    addLog("Camera access denied.", "danger");
-    console.error(err);
+function startCamera() {
+    if (videoElement.srcObject) {
+        videoElement.srcObject.getTracks().forEach(track => track.stop());
+    }
+    
+    if (camera && typeof camera.stop === 'function') {
+        camera.stop();
+    }
+
+    camera = new Camera(videoElement, {
+        onFrame: async () => {
+            await pose.send({image: videoElement});
+        },
+        width: 1280,
+        height: 720,
+        facingMode: currentFacingMode
+    });
+
+    addLog(`Initializing ${currentFacingMode} camera...`, "info");
+    camera.start().then(() => {
+        addLog("Camera active. Models loaded.", "info");
+    }).catch((err) => {
+        addLog("Camera access denied.", "danger");
+        console.error(err);
+    });
+}
+
+// Initial start
+startCamera();
+
+flipCameraBtn.addEventListener('click', () => {
+    currentFacingMode = currentFacingMode === 'user' ? 'environment' : 'user';
+    
+    // Stop mirror effect if using back camera (environment)
+    if (currentFacingMode === 'environment') {
+        videoElement.style.transform = 'none';
+        canvasElement.style.transform = 'none';
+    } else {
+        videoElement.style.transform = 'scaleX(-1)';
+        canvasElement.style.transform = 'scaleX(-1)';
+    }
+    
+    addLog("Switching camera module...", "warn");
+    startCamera();
 });
 
 // --- SCAN LOGIC ---
