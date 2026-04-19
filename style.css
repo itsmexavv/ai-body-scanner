@@ -72,24 +72,26 @@ body {
 
 .hud-main {
     display: flex;
+    justify-content: space-between;
     flex: 1;
     gap: 20px;
-    overflow: hidden;
+    pointer-events: none;
 }
 
 .panel {
-    flex: 0 0 300px;
+    flex: 0 0 320px;
     display: flex;
     flex-direction: column;
     gap: 20px;
+    pointer-events: auto;
 }
 
 .panel-box {
-    background: var(--panel-bg);
+    background: rgba(0, 15, 25, 0.75);
+    backdrop-filter: blur(8px);
     border: 1px solid var(--border-color);
     border-radius: 5px;
     padding: 15px;
-    backdrop-filter: blur(5px);
     box-shadow: inset 0 0 20px rgba(0, 240, 255, 0.1);
 }
 
@@ -129,14 +131,16 @@ body {
 }
 
 .video-section {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    position: relative;
-    border: 1px solid var(--border-color);
-    background: #000;
-    border-radius: 5px;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: -1;
+    border: none;
+    border-radius: 0;
     overflow: hidden;
+    background: #000;
 }
 
 .video-wrapper {
@@ -489,7 +493,7 @@ body {
 
     .hud-main {
         flex-direction: column;
-        overflow: visible;
+        justify-content: flex-start;
     }
 
     .panel {
@@ -498,19 +502,6 @@ body {
         margin-bottom: 10px;
     }
 
-    /* Move the video behind everything to act as a full-screen background scanner */
-    .video-section {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100vw;
-        height: 100vh;
-        z-index: -1;
-        border: none;
-        border-radius: 0;
-    }
-
-    /* Add darker background to panels so text remains readable over the video feed */
     .panel-box {
         background: rgba(0, 10, 20, 0.85);
         backdrop-filter: blur(10px);
