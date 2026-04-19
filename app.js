@@ -22,6 +22,7 @@ let lastLogTime = 0;
 let isSubjectDetected = false;
 let latestOverallScore = 100;
 let isScanning = false;
+let autoScanTimeout = null;
 
 // Scan UI Elements
 const scanBtn = document.getElementById('scan-btn');
@@ -106,9 +107,17 @@ function onResults(results) {
             isSubjectDetected = true;
             diagnosticText.textContent = "SUBJECT ACQUIRED - ANALYZING";
             addLog("Subject identified in frame.", "info");
+            
             if (!isScanning) {
                 scanBtn.disabled = false;
                 scanBtn.textContent = "INITIATE DEEP SCAN";
+                
+                // Automatically trigger the scan after 3 seconds of being in frame
+                autoScanTimeout = setTimeout(() => {
+                    if (isSubjectDetected && !isScanning) {
+                        scanBtn.click();
+                    }
+                }, 3000);
             }
         }
 
@@ -188,6 +197,8 @@ function onResults(results) {
             alertContent.className = "alert-content";
             addLog("Subject lost.", "warn");
             
+            clearTimeout(autoScanTimeout);
+            
             scanBtn.disabled = true;
             scanBtn.textContent = "AWAITING SUBJECT";
             
@@ -243,6 +254,8 @@ scanBtn.addEventListener('click', () => {
     isScanning = true;
     scanBtn.disabled = true;
     scanBtn.textContent = "SCANNING VITALS...";
+    diagnosticText.textContent = "DEEP SCAN IN PROGRESS...";
+    diagnosticText.style.color = "var(--primary)";
     addLog("Initiating Deep Bio-Scan...", "warn");
 
     // Simulate 3 seconds of scanning
@@ -271,11 +284,11 @@ scanBtn.addEventListener('click', () => {
 
         // Determine AI Advice
         if (hr > 100 || sys > 140) {
-            medAdvice.innerHTML = "High physiological stress detected.<br><br><b>ADVICE:</b> Immediate rest recommended. Hydrate with 500ml water. Consider a beta-blocker if chronic tachycardia exists (Consult Physician). Practice deep breathing for 5 minutes.";
+            medAdvice.innerHTML = "<span style='color:var(--danger)'><b>POSSIBLE CONDITION:</b> Acute Stress Response / Pre-Hypertension</span><br><br><b>RECOMMENDED ADVICE:</b> Immediate rest recommended. Hydrate with 500ml water. Consider a beta-blocker if chronic tachycardia exists (Consult Physician). Practice deep breathing for 5 minutes.";
         } else if (spo2 < 95 || latestOverallScore < 60) {
-            medAdvice.innerHTML = "Sub-optimal oxygenation and poor structural integrity.<br><br><b>ADVICE:</b> Correct posture immediately to open airways. Stand up and stretch. If asthmatic, ensure bronchodilator is accessible.";
+            medAdvice.innerHTML = "<span style='color:var(--warning)'><b>POSSIBLE CONDITION:</b> Hypoxia-induced Fatigue / Severe Postural Kyphosis (Tech Neck)</span><br><br><b>RECOMMENDED ADVICE:</b> Correct posture immediately to open airways. Stand up and stretch. If asthmatic, ensure bronchodilator is accessible.";
         } else {
-            medAdvice.innerHTML = "Vitals are within nominal parameters.<br><br><b>ADVICE:</b> Maintain current ergonomic posture. Continue daily multivitamin regimen (Vitamin D3, B12). No pharmacological intervention required.";
+            medAdvice.innerHTML = "<span style='color:var(--secondary)'><b>POSSIBLE CONDITION:</b> Optimal Biomechanical & Physiological State</span><br><br><b>RECOMMENDED ADVICE:</b> Maintain current ergonomic posture. Continue daily multivitamin regimen (Vitamin D3, B12). No pharmacological intervention required.";
         }
 
         reportModal.classList.remove('hidden');
