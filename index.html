@@ -2,21 +2,42 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="description" content="BioScan - AI-powered real-time body posture and biomechanical analysis using computer vision">
     <title>BioScan - AI Body Analyzer</title>
     <link rel="stylesheet" href="style.css">
-    <!-- MediaPipe dependencies -->
-    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/control_utils/control_utils.js" crossorigin="anonymous"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js" crossorigin="anonymous"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose/pose.js" crossorigin="anonymous"></script>
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap" rel="stylesheet">
 </head>
 <body>
+    <!-- Loading Screen -->
+    <div id="loading-screen" class="loading-screen">
+        <div class="loading-content">
+            <div class="loading-spinner"></div>
+            <h1 class="loading-title">SYS.BIOSCAN.V2</h1>
+            <p class="loading-subtitle" id="loading-status">INITIALIZING NEURAL ENGINE...</p>
+            <div class="loading-bar-track">
+                <div class="loading-bar-fill" id="loading-bar"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Camera Permission Prompt -->
+    <div id="camera-prompt" class="camera-prompt hidden">
+        <div class="prompt-content">
+            <div class="prompt-icon">📷</div>
+            <h2>CAMERA ACCESS REQUIRED</h2>
+            <p>BioScan needs camera access to perform real-time body analysis. Tap the button below and allow camera permissions.</p>
+            <button id="grant-camera-btn" class="scan-btn pulse-btn">ACTIVATE CAMERA</button>
+        </div>
+    </div>
+
     <div class="scanner-container">
         <header class="hud-header">
-            <h1>SYS.BIOSCAN.V1</h1>
+            <h1>SYS.BIOSCAN.V2</h1>
             <div class="status-indicator">
                 <div class="dot blinking"></div>
                 <span>SYSTEM ACTIVE</span>
@@ -25,7 +46,7 @@
 
         <main class="hud-main">
             <!-- Left Panel: Metrics -->
-            <aside class="panel left-panel">
+            <aside class="panel left-panel" id="left-panel">
                 <div class="panel-box">
                     <h2>POSTURE METRICS</h2>
                     <div class="metric">
@@ -65,9 +86,9 @@
             <!-- Center: Camera feed & Canvas -->
             <section class="video-section">
                 <div class="video-wrapper">
-                    <!-- The webcam feed (hidden visually, just for data) -->
+                    <!-- The webcam feed -->
                     <video id="input-video" class="input_video" autoplay playsinline muted></video>
-                    <!-- The canvas where we draw the UI and the webcam feed with overlay -->
+                    <!-- The canvas where we draw the AI overlay -->
                     <canvas id="output-canvas" class="output_canvas"></canvas>
                     
                     <div class="targeting-reticle top-left"></div>
@@ -83,7 +104,7 @@
             </section>
 
             <!-- Right Panel: Diagnostics -->
-            <aside class="panel right-panel">
+            <aside class="panel right-panel" id="right-panel">
                 <div class="panel-box">
                     <h2>ADVANCED KINEMATICS</h2>
                     <div class="vitals-hud">
@@ -121,6 +142,35 @@
         </main>
     </div>
 
+    <!-- Mobile Floating Controls -->
+    <div class="mobile-controls" id="mobile-controls">
+        <button id="mobile-flip-btn" class="mobile-btn" title="Flip Camera">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 7l-4-4-4 4"/><path d="M16 3v10"/><path d="M4 17l4 4 4-4"/><path d="M8 21V11"/></svg>
+        </button>
+        <button id="mobile-scan-btn" class="mobile-btn scan-pulse" title="Deep Scan" disabled>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+        </button>
+        <button id="mobile-panels-btn" class="mobile-btn" title="Toggle Panels">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+        </button>
+    </div>
+
+    <!-- Mobile Stats Overlay -->
+    <div class="mobile-stats-bar" id="mobile-stats-bar">
+        <div class="mobile-stat">
+            <span class="mobile-stat-label">INTEGRITY</span>
+            <span class="mobile-stat-val" id="mobile-integrity-val">--%</span>
+        </div>
+        <div class="mobile-stat">
+            <span class="mobile-stat-label">STABILITY</span>
+            <span class="mobile-stat-val" id="mobile-stability-val">--%</span>
+        </div>
+        <div class="mobile-stat">
+            <span class="mobile-stat-label">SYMMETRY</span>
+            <span class="mobile-stat-val" id="mobile-symmetry-val">--%</span>
+        </div>
+    </div>
+
     <!-- Medical Report Modal -->
     <div id="report-modal" class="modal hidden">
         <div class="modal-content">
@@ -146,7 +196,12 @@
             <button id="close-modal-btn" class="scan-btn">ACKNOWLEDGE & CLOSE</button>
         </div>
     </div>
-    
+
+    <!-- MediaPipe dependencies loaded AFTER the DOM -->
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/control_utils/control_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose/pose.js" crossorigin="anonymous"></script>
     <script src="app.js"></script>
 </body>
 </html>
