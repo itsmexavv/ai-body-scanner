@@ -473,3 +473,65 @@ body {
     line-height: 1.5;
     color: #fff;
 }
+
+/* Mobile Responsiveness */
+@media (max-width: 900px) {
+    body {
+        overflow-y: auto;
+    }
+
+    .scanner-container {
+        height: auto;
+        min-height: 100vh;
+        padding: 10px;
+        position: relative;
+    }
+
+    .hud-main {
+        flex-direction: column;
+        overflow: visible;
+    }
+
+    .panel {
+        flex: auto;
+        width: 100%;
+        margin-bottom: 10px;
+    }
+
+    /* Move the video behind everything to act as a full-screen background scanner */
+    .video-section {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        z-index: -1;
+        border: none;
+        border-radius: 0;
+    }
+
+    /* Add darker background to panels so text remains readable over the video feed */
+    .panel-box {
+        background: rgba(0, 10, 20, 0.85);
+        backdrop-filter: blur(10px);
+    }
+
+    .hud-header {
+        background: rgba(0, 10, 20, 0.85);
+        padding: 10px;
+        border-radius: 5px;
+        backdrop-filter: blur(10px);
+    }
+
+    /* Stack the modal vitals nicely on small screens */
+    .vitals-grid {
+        grid-template-columns: 1fr;
+    }
+
+    /* Move the diagnostic text slightly higher on mobile */
+    .diagnostic-text {
+        bottom: 40px;
+        width: 90%;
+        text-align: center;
+    }
+}
