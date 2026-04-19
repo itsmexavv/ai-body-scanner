@@ -32,6 +32,10 @@ const spo2Val = document.getElementById('spo2-val');
 const bpVal = document.getElementById('bp-val');
 const medAdvice = document.getElementById('med-advice');
 
+const hudHrVal = document.getElementById('hud-hr-val');
+const hudSpo2Val = document.getElementById('hud-spo2-val');
+const hudBpVal = document.getElementById('hud-bp-val');
+
 function addLog(message, type = 'info') {
     const now = Date.now();
     if (now - lastLogTime < 1000) return; // Prevent log spam
@@ -188,6 +192,10 @@ function onResults(results) {
             scanBtn.disabled = true;
             scanBtn.textContent = "AWAITING SUBJECT";
             
+            hudHrVal.textContent = "-- BPM";
+            hudSpo2Val.textContent = "-- %";
+            hudBpVal.textContent = "--/--";
+            
             // Reset bars
             updateBar(neckBar, neckVal, 0);
             updateBar(spineBar, spineVal, 0);
@@ -288,3 +296,25 @@ scanBtn.addEventListener('click', () => {
 closeModalBtn.addEventListener('click', () => {
     reportModal.classList.add('hidden');
 });
+
+// Live Vitals HUD Loop
+setInterval(() => {
+    if (isSubjectDetected && !isScanning) {
+        const stressFactor = (100 - latestOverallScore) / 100;
+        
+        // Slight natural fluctuations
+        const hr = Math.floor(65 + (Math.random() * 5) + (stressFactor * 30));
+        const spo2 = Math.max(93, Math.floor(99 - (stressFactor * 5) - (Math.random() * 1)));
+        const sys = Math.floor(115 + (Math.random() * 5) + (stressFactor * 25));
+        const dia = Math.floor(75 + (Math.random() * 5) + (stressFactor * 15));
+
+        hudHrVal.textContent = `${hr} BPM`;
+        hudHrVal.style.color = hr > 95 ? 'var(--danger)' : 'var(--primary)';
+
+        hudSpo2Val.textContent = `${spo2} %`;
+        hudSpo2Val.style.color = spo2 < 95 ? 'var(--danger)' : 'var(--primary)';
+
+        hudBpVal.textContent = `${sys}/${dia}`;
+        hudBpVal.style.color = sys > 135 ? 'var(--danger)' : 'var(--primary)';
+    }
+}, 2000);

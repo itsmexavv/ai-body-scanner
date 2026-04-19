@@ -337,10 +337,29 @@ body {
 }
 
 .scan-btn:disabled {
-    border-color: rgba(255, 255, 255, 0.2);
-    color: rgba(255, 255, 255, 0.2);
+    border-color: rgba(0, 240, 255, 0.3);
+    color: rgba(0, 240, 255, 0.4);
     cursor: not-allowed;
     box-shadow: none;
+    background: rgba(0, 0, 0, 0.5);
+}
+
+/* Vitals HUD */
+.vitals-hud {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.vital-hud-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: rgba(0, 0, 0, 0.4);
+    padding: 10px 15px;
+    border: 1px solid rgba(0, 240, 255, 0.2);
+    border-radius: 5px;
+    border-left: 3px solid var(--primary);
 }
 
 /* Modal */
