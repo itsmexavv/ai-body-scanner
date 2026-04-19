@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BioScan - AI Body Analyzer</title>
+    <link rel="stylesheet" href="style.css">
+    <!-- MediaPipe dependencies -->
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/control_utils/control_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose/pose.js" crossorigin="anonymous"></script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="scanner-container">
+        <header class="hud-header">
+            <h1>SYS.BIOSCAN.V1</h1>
+            <div class="status-indicator">
+                <div class="dot blinking"></div>
+                <span>SYSTEM ACTIVE</span>
+            </div>
+        </header>
+
+        <main class="hud-main">
+            <!-- Left Panel: Metrics -->
+            <aside class="panel left-panel">
+                <div class="panel-box">
+                    <h2>POSTURE METRICS</h2>
+                    <div class="metric">
+                        <span>Neck Alignment</span>
+                        <div class="bar-container"><div id="neck-bar" class="bar"></div></div>
+                        <span id="neck-val">--%</span>
+                    </div>
+                    <div class="metric">
+                        <span>Spine Alignment</span>
+                        <div class="bar-container"><div id="spine-bar" class="bar"></div></div>
+                        <span id="spine-val">--%</span>
+                    </div>
+                    <div class="metric">
+                        <span>Shoulder Balance</span>
+                        <div class="bar-container"><div id="shoulder-bar" class="bar"></div></div>
+                        <span id="shoulder-val">--%</span>
+                    </div>
+                </div>
+
+                <div class="panel-box">
+                    <h2>OVERALL INTEGRITY</h2>
+                    <div class="circular-progress">
+                        <svg>
+                            <circle cx="50" cy="50" r="45"></circle>
+                            <circle id="integrity-circle" cx="50" cy="50" r="45"></circle>
+                        </svg>
+                        <div class="progress-value" id="integrity-val">--%</div>
+                    </div>
+                </div>
+            </aside>
+
+            <!-- Center: Camera feed & Canvas -->
+            <section class="video-section">
+                <div class="video-wrapper">
+                    <!-- The webcam feed (hidden visually, just for data) -->
+                    <video id="input-video" class="input_video" autoplay playsinline></video>
+                    <!-- The canvas where we draw the UI and the webcam feed with overlay -->
+                    <canvas id="output-canvas" class="output_canvas"></canvas>
+                    
+                    <div class="targeting-reticle top-left"></div>
+                    <div class="targeting-reticle top-right"></div>
+                    <div class="targeting-reticle bottom-left"></div>
+                    <div class="targeting-reticle bottom-right"></div>
+                    
+                    <div class="scanning-line"></div>
+                </div>
+                <div class="diagnostic-text" id="diagnostic-text">
+                    AWAITING SUBJECT...
+                </div>
+            </section>
+
+            <!-- Right Panel: Diagnostics -->
+            <aside class="panel right-panel">
+                <div class="panel-box">
+                    <h2>LIVE DIAGNOSTICS</h2>
+                    <ul class="log-list" id="log-list">
+                        <li>System initialized.</li>
+                        <li>Camera standing by...</li>
+                    </ul>
+                </div>
+                
+                <div class="panel-box alert-box" id="alert-box">
+                    <h2>STATUS ALERT</h2>
+                    <div class="alert-content" id="alert-content">
+                        NO ANOMALIES DETECTED
+                    </div>
+                </div>
+            </aside>
+        </main>
+    </div>
+    
+    <script src="app.js"></script>
+</body>
+</html>

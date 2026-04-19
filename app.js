@@ -1,0 +1,212 @@
+const videoElement = document.getElementById('input-video');
+const canvasElement = document.getElementById('output-canvas');
+const canvasCtx = canvasElement.getContext('2d');
+
+// UI Elements
+const diagnosticText = document.getElementById('diagnostic-text');
+const logList = document.getElementById('log-list');
+const alertContent = document.getElementById('alert-content');
+
+const neckBar = document.getElementById('neck-bar');
+const spineBar = document.getElementById('spine-bar');
+const shoulderBar = document.getElementById('shoulder-bar');
+const neckVal = document.getElementById('neck-val');
+const spineVal = document.getElementById('spine-val');
+const shoulderVal = document.getElementById('shoulder-val');
+
+const integrityCircle = document.getElementById('integrity-circle');
+const integrityVal = document.getElementById('integrity-val');
+
+// State
+let lastLogTime = 0;
+let isSubjectDetected = false;
+
+function addLog(message, type = 'info') {
+    const now = Date.now();
+    if (now - lastLogTime < 1000) return; // Prevent log spam
+    lastLogTime = now;
+
+    const li = document.createElement('li');
+    li.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+    if (type !== 'info') li.className = type;
+    
+    logList.appendChild(li);
+    logList.scrollTop = logList.scrollHeight;
+
+    // Keep only last 10 logs
+    if (logList.children.length > 10) {
+        logList.removeChild(logList.firstChild);
+    }
+}
+
+// Update UI Bars
+function updateBar(element, valElement, percentage, isInverse = false) {
+    // If isInverse is true, lower percentage means worse score (e.g. higher asymmetry = lower score)
+    let displayPercent = Math.max(0, Math.min(100, percentage));
+    
+    element.style.width = `${displayPercent}%`;
+    valElement.textContent = `${Math.round(displayPercent)}%`;
+
+    let color = 'var(--primary)'; // cyan
+    let score = displayPercent;
+
+    if (score < 40) color = 'var(--danger)';
+    else if (score < 70) color = 'var(--warning)';
+    else color = 'var(--secondary)'; // green
+
+    element.style.background = color;
+    element.style.boxShadow = `0 0 10px ${color}`;
+    
+    return score; // Return normalized score out of 100
+}
+
+function updateIntegrity(score) {
+    const offset = 283 - (283 * score) / 100;
+    integrityCircle.style.strokeDashoffset = offset;
+    integrityVal.textContent = `${Math.round(score)}%`;
+
+    let color = 'var(--secondary)';
+    if (score < 50) color = 'var(--danger)';
+    else if (score < 80) color = 'var(--warning)';
+
+    integrityCircle.style.stroke = color;
+    integrityVal.style.color = color;
+    integrityVal.style.textShadow = `0 0 10px ${color}`;
+}
+
+function onResults(results) {
+    // Set canvas dimensions to match video to avoid stretching
+    if (canvasElement.width !== videoElement.videoWidth) {
+        canvasElement.width = videoElement.videoWidth;
+        canvasElement.height = videoElement.videoHeight;
+    }
+
+    canvasCtx.save();
+    canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
+
+    // Draw video frame on canvas
+    canvasCtx.drawImage(results.image, 0, 0, canvasElement.width, canvasElement.height);
+
+    if (results.poseLandmarks && results.poseLandmarks.length > 0) {
+        if (!isSubjectDetected) {
+            isSubjectDetected = true;
+            diagnosticText.textContent = "SUBJECT ACQUIRED - ANALYZING";
+            addLog("Subject identified in frame.", "info");
+        }
+
+        const landmarks = results.poseLandmarks;
+
+        // Draw Landmarks with custom HUD styling
+        drawConnectors(canvasCtx, landmarks, POSE_CONNECTIONS, {
+            color: 'rgba(0, 240, 255, 0.5)', 
+            lineWidth: 2
+        });
+        drawLandmarks(canvasCtx, landmarks, {
+            color: '#00f0ff', 
+            lineWidth: 1, 
+            radius: 3
+        });
+
+        // --- BIOMECHANICAL ANALYSIS ---
+        // MediaPipe Pose landmarks
+        const nose = landmarks[0];
+        const leftEar = landmarks[7];
+        const rightEar = landmarks[8];
+        const leftShoulder = landmarks[11];
+        const rightShoulder = landmarks[12];
+        const leftHip = landmarks[23];
+        const rightHip = landmarks[24];
+
+        // Ensure landmarks exist with high enough visibility
+        if(leftShoulder.visibility > 0.5 && rightShoulder.visibility > 0.5) {
+            // 1. Shoulder Balance
+            const shoulderDiff = Math.abs(leftShoulder.y - rightShoulder.y);
+            // shoulderDiff usually between 0.0 and 0.2. Normalize to a 0-100 score.
+            const shoulderScore = updateBar(shoulderBar, shoulderVal, Math.max(0, 100 - (shoulderDiff * 800)), false);
+
+            // 2. Neck Alignment (Ear vs Shoulder horizontal offset)
+            const avgEarX = (leftEar.x + rightEar.x) / 2;
+            const avgShoulderX = (leftShoulder.x + rightShoulder.x) / 2;
+            const neckOffset = Math.abs(avgEarX - avgShoulderX);
+            const neckScore = updateBar(neckBar, neckVal, Math.max(0, 100 - (neckOffset * 400)), false);
+
+            // 3. Spine Alignment (Nose center vs Hip center)
+            const avgHipX = (leftHip.x + rightHip.x) / 2;
+            const spineOffset = Math.abs(nose.x - avgHipX);
+            const spineScore = updateBar(spineBar, spineVal, Math.max(0, 100 - (spineOffset * 300)), false);
+
+            // Calculate Overall Integrity
+            const overallScore = (shoulderScore + neckScore + spineScore) / 3;
+            updateIntegrity(overallScore);
+
+            // Determine Status Alert
+            if (overallScore < 50) {
+                alertContent.textContent = "CRITICAL POSTURE FAILURE";
+                alertContent.className = "alert-content danger";
+                diagnosticText.textContent = "WARNING: REALIGNMENT REQUIRED";
+                diagnosticText.style.color = "var(--danger)";
+                addLog("Posture metrics critically low.", "danger");
+            } else if (overallScore < 80) {
+                alertContent.textContent = "SUB-OPTIMAL ALIGNMENT";
+                alertContent.className = "alert-content warn";
+                diagnosticText.textContent = "ANALYSIS: MODERATE DEVIATION";
+                diagnosticText.style.color = "var(--warning)";
+                addLog("Minor postural deviations detected.", "warn");
+            } else {
+                alertContent.textContent = "OPTIMAL CONDITION";
+                alertContent.className = "alert-content";
+                diagnosticText.textContent = "SYSTEM NOMINAL";
+                diagnosticText.style.color = "var(--secondary)";
+            }
+        }
+
+    } else {
+        if (isSubjectDetected) {
+            isSubjectDetected = false;
+            diagnosticText.textContent = "AWAITING SUBJECT...";
+            diagnosticText.style.color = "var(--primary)";
+            alertContent.textContent = "STANDBY";
+            alertContent.className = "alert-content";
+            addLog("Subject lost.", "warn");
+            
+            // Reset bars
+            updateBar(neckBar, neckVal, 0);
+            updateBar(spineBar, spineVal, 0);
+            updateBar(shoulderBar, shoulderVal, 0);
+            updateIntegrity(0);
+        }
+    }
+    canvasCtx.restore();
+}
+
+// Initialize MediaPipe Pose
+const pose = new Pose({locateFile: (file) => {
+    return `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${file}`;
+}});
+
+pose.setOptions({
+    modelComplexity: 1,
+    smoothLandmarks: true,
+    enableSegmentation: false,
+    minDetectionConfidence: 0.5,
+    minTrackingConfidence: 0.5
+});
+
+pose.onResults(onResults);
+
+// Initialize WebCam
+const camera = new Camera(videoElement, {
+    onFrame: async () => {
+        await pose.send({image: videoElement});
+    },
+    width: 1280,
+    height: 720
+});
+
+addLog("Initializing camera systems...", "info");
+camera.start().then(() => {
+    addLog("Camera active. Models loaded.", "info");
+}).catch((err) => {
+    addLog("Camera access denied.", "danger");
+    console.error(err);
+});
