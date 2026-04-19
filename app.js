@@ -99,8 +99,7 @@ function onResults(results) {
     canvasCtx.save();
     canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
 
-    // Draw video frame on canvas
-    canvasCtx.drawImage(results.image, 0, 0, canvasElement.width, canvasElement.height);
+    // Video is now displayed natively behind the canvas, no need to draw it manually.
 
     if (results.poseLandmarks && results.poseLandmarks.length > 0) {
         if (!isSubjectDetected) {
