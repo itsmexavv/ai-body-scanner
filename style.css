@@ -17,14 +17,10 @@
 }
 
 body {
-    background-color: var(--bg-color);
+    background-color: #000;
     color: var(--text-color);
     height: 100vh;
     overflow: hidden;
-    background-image: 
-        linear-gradient(rgba(0, 240, 255, 0.05) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(0, 240, 255, 0.05) 1px, transparent 1px);
-    background-size: 30px 30px;
 }
 
 .scanner-container {
@@ -84,6 +80,8 @@ body {
     flex-direction: column;
     gap: 20px;
     pointer-events: auto;
+    position: relative;
+    z-index: 10;
 }
 
 .panel-box {
@@ -136,11 +134,24 @@ body {
     left: 0;
     width: 100vw;
     height: 100vh;
-    z-index: -1;
+    z-index: 0;
     border: none;
     border-radius: 0;
     overflow: hidden;
     background: #000;
+}
+
+.video-section::after {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background-image: 
+        linear-gradient(rgba(0, 240, 255, 0.05) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 240, 255, 0.05) 1px, transparent 1px);
+    background-size: 30px 30px;
+    background-color: rgba(5, 10, 17, 0.4);
+    z-index: 3;
+    pointer-events: none;
 }
 
 .video-wrapper {
