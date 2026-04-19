@@ -20,6 +20,17 @@ const integrityVal = document.getElementById('integrity-val');
 // State
 let lastLogTime = 0;
 let isSubjectDetected = false;
+let latestOverallScore = 100;
+let isScanning = false;
+
+// Scan UI Elements
+const scanBtn = document.getElementById('scan-btn');
+const reportModal = document.getElementById('report-modal');
+const closeModalBtn = document.getElementById('close-modal-btn');
+const hrVal = document.getElementById('hr-val');
+const spo2Val = document.getElementById('spo2-val');
+const bpVal = document.getElementById('bp-val');
+const medAdvice = document.getElementById('med-advice');
 
 function addLog(message, type = 'info') {
     const now = Date.now();
@@ -92,6 +103,10 @@ function onResults(results) {
             isSubjectDetected = true;
             diagnosticText.textContent = "SUBJECT ACQUIRED - ANALYZING";
             addLog("Subject identified in frame.", "info");
+            if (!isScanning) {
+                scanBtn.disabled = false;
+                scanBtn.textContent = "INITIATE DEEP SCAN";
+            }
         }
 
         const landmarks = results.poseLandmarks;
@@ -137,6 +152,7 @@ function onResults(results) {
 
             // Calculate Overall Integrity
             const overallScore = (shoulderScore + neckScore + spineScore) / 3;
+            latestOverallScore = overallScore;
             updateIntegrity(overallScore);
 
             // Determine Status Alert
@@ -168,6 +184,9 @@ function onResults(results) {
             alertContent.textContent = "STANDBY";
             alertContent.className = "alert-content";
             addLog("Subject lost.", "warn");
+            
+            scanBtn.disabled = true;
+            scanBtn.textContent = "AWAITING SUBJECT";
             
             // Reset bars
             updateBar(neckBar, neckVal, 0);
@@ -209,4 +228,63 @@ camera.start().then(() => {
 }).catch((err) => {
     addLog("Camera access denied.", "danger");
     console.error(err);
+});
+
+// --- SCAN LOGIC ---
+scanBtn.addEventListener('click', () => {
+    if (isScanning || !isSubjectDetected) return;
+    isScanning = true;
+    scanBtn.disabled = true;
+    scanBtn.textContent = "SCANNING VITALS...";
+    addLog("Initiating Deep Bio-Scan...", "warn");
+
+    // Simulate 3 seconds of scanning
+    setTimeout(() => {
+        // Generate simulated vitals based roughly on posture score
+        const stressFactor = (100 - latestOverallScore) / 100; // 0 (good) to 1 (bad)
+
+        // Heart Rate: Base 65-75, increases with stress
+        const hr = Math.floor(65 + (Math.random() * 10) + (stressFactor * 40));
+        
+        // SpO2: Base 98-100, decreases with stress
+        const spo2 = Math.max(92, Math.floor(99 - (stressFactor * 5) - (Math.random() * 2)));
+        
+        // Blood Pressure: Base 115/75, increases with stress
+        const sys = Math.floor(115 + (Math.random() * 10) + (stressFactor * 30));
+        const dia = Math.floor(75 + (Math.random() * 8) + (stressFactor * 20));
+
+        hrVal.textContent = `${hr} BPM`;
+        hrVal.style.color = hr > 95 ? 'var(--danger)' : 'var(--primary)';
+
+        spo2Val.textContent = `${spo2} %`;
+        spo2Val.style.color = spo2 < 95 ? 'var(--danger)' : 'var(--primary)';
+
+        bpVal.textContent = `${sys}/${dia}`;
+        bpVal.style.color = sys > 135 ? 'var(--danger)' : 'var(--primary)';
+
+        // Determine AI Advice
+        if (hr > 100 || sys > 140) {
+            medAdvice.innerHTML = "High physiological stress detected.<br><br><b>ADVICE:</b> Immediate rest recommended. Hydrate with 500ml water. Consider a beta-blocker if chronic tachycardia exists (Consult Physician). Practice deep breathing for 5 minutes.";
+        } else if (spo2 < 95 || latestOverallScore < 60) {
+            medAdvice.innerHTML = "Sub-optimal oxygenation and poor structural integrity.<br><br><b>ADVICE:</b> Correct posture immediately to open airways. Stand up and stretch. If asthmatic, ensure bronchodilator is accessible.";
+        } else {
+            medAdvice.innerHTML = "Vitals are within nominal parameters.<br><br><b>ADVICE:</b> Maintain current ergonomic posture. Continue daily multivitamin regimen (Vitamin D3, B12). No pharmacological intervention required.";
+        }
+
+        reportModal.classList.remove('hidden');
+        addLog("Deep Scan Complete. Report generated.", "info");
+
+        // Reset button
+        isScanning = false;
+        if (isSubjectDetected) {
+            scanBtn.disabled = false;
+            scanBtn.textContent = "INITIATE DEEP SCAN";
+        } else {
+            scanBtn.textContent = "AWAITING SUBJECT";
+        }
+    }, 3000);
+});
+
+closeModalBtn.addEventListener('click', () => {
+    reportModal.classList.add('hidden');
 });

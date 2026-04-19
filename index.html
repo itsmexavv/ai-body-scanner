@@ -55,6 +55,11 @@
                         <div class="progress-value" id="integrity-val">--%</div>
                     </div>
                 </div>
+
+                <div class="panel-box">
+                    <h2>DEEP BIO-SCAN</h2>
+                    <button id="scan-btn" class="scan-btn" disabled>AWAITING SUBJECT</button>
+                </div>
             </aside>
 
             <!-- Center: Camera feed & Canvas -->
@@ -95,6 +100,32 @@
                 </div>
             </aside>
         </main>
+    </div>
+
+    <!-- Medical Report Modal -->
+    <div id="report-modal" class="modal hidden">
+        <div class="modal-content">
+            <h2 class="modal-title">MEDICAL ANALYSIS COMPLETE</h2>
+            <div class="vitals-grid">
+                <div class="vital-box">
+                    <span class="vital-label">HEART RATE</span>
+                    <span class="vital-val" id="hr-val">-- BPM</span>
+                </div>
+                <div class="vital-box">
+                    <span class="vital-label">OXYGEN (SpO2)</span>
+                    <span class="vital-val" id="spo2-val">-- %</span>
+                </div>
+                <div class="vital-box">
+                    <span class="vital-label">BLOOD PRESSURE</span>
+                    <span class="vital-val" id="bp-val">--/--</span>
+                </div>
+            </div>
+            <div class="recommendation-box">
+                <h3>PHARMACOLOGICAL / LIFESTYLE ADVICE:</h3>
+                <p id="med-advice">Awaiting data...</p>
+            </div>
+            <button id="close-modal-btn" class="scan-btn">ACKNOWLEDGE & CLOSE</button>
+        </div>
     </div>
     
     <script src="app.js"></script>
