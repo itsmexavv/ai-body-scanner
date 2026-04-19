@@ -29,6 +29,13 @@ const loadingStatus = document.getElementById('loading-status');
 const loadingBar = document.getElementById('loading-bar');
 const cameraPrompt = document.getElementById('camera-prompt');
 const grantCameraBtn = document.getElementById('grant-camera-btn');
+// Vital signs elements
+const hudHrVal = document.getElementById('hud-hr-val');
+const hudSpo2Val = document.getElementById('hud-spo2-val');
+const hudBpVal = document.getElementById('hud-bp-val');
+const modalHrVal = document.getElementById('modal-hr-val');
+const modalSpo2Val = document.getElementById('modal-spo2-val');
+const modalBpVal = document.getElementById('modal-bp-val');
 // Mobile elements
 const mobileFlipBtn = document.getElementById('mobile-flip-btn');
 const mobileScanBtn = document.getElementById('mobile-scan-btn');
@@ -62,6 +69,52 @@ let kineticState = "INITIALIZING";
 let neckAngleDeg = 0;
 let spineDeviationDeg = 0;
 let shoulderTiltDeg = 0;
+
+// Simulated vitals (adjust based on real posture state)
+let liveHR = 72;
+let liveSpo2 = 98;
+let liveSys = 120;
+let liveDia = 80;
+let vitalsInterval = null;
+
+function updateVitals() {
+    if (!isSubjectDetected) return;
+    // Posture stress factor: worse posture = higher stress
+    const stressFactor = Math.max(0, (100 - latestOverallScore) / 100);
+    // Heart rate: 65-78 normal, up to 110 under bad posture
+    liveHR = Math.round(68 + (stressFactor * 35) + (Math.random() * 6 - 3));
+    // SpO2: 96-99 normal, drops slightly with bad posture
+    liveSpo2 = Math.round(Math.min(99, 98 - (stressFactor * 3) + (Math.random() * 2 - 1)));
+    // BP: 115-125/75-85 normal, rises with poor posture
+    liveSys = Math.round(118 + (stressFactor * 22) + (Math.random() * 6 - 3));
+    liveDia = Math.round(78 + (stressFactor * 12) + (Math.random() * 4 - 2));
+    // Update HUD
+    if (hudHrVal) {
+        hudHrVal.textContent = `${liveHR} BPM`;
+        hudHrVal.style.color = liveHR > 100 ? 'var(--danger)' : 'var(--primary)';
+    }
+    if (hudSpo2Val) {
+        hudSpo2Val.textContent = `${liveSpo2}%`;
+        hudSpo2Val.style.color = liveSpo2 < 95 ? 'var(--danger)' : 'var(--primary)';
+    }
+    if (hudBpVal) {
+        hudBpVal.textContent = `${liveSys}/${liveDia}`;
+        hudBpVal.style.color = liveSys > 140 ? 'var(--danger)' : liveSys > 130 ? 'var(--warning)' : 'var(--primary)';
+    }
+}
+
+function startVitalsMonitor() {
+    if (vitalsInterval) return;
+    updateVitals();
+    vitalsInterval = setInterval(updateVitals, 2000);
+}
+
+function stopVitalsMonitor() {
+    if (vitalsInterval) { clearInterval(vitalsInterval); vitalsInterval = null; }
+    if (hudHrVal) hudHrVal.textContent = '-- BPM';
+    if (hudSpo2Val) hudSpo2Val.textContent = '--%';
+    if (hudBpVal) hudBpVal.textContent = '--/--';
+}
 
 // ====== UTILITY: Calculate angle between 3 points (in degrees) ======
 function calcAngle(a, b, c) {
@@ -247,6 +300,7 @@ function onResults(results) {
             scanBtn.disabled = false;
             scanBtn.textContent = "INITIATE DEEP SCAN";
             if (mobileScanBtn) mobileScanBtn.disabled = false;
+            startVitalsMonitor();
             autoScanTimeout = setTimeout(() => {
                 if (isSubjectDetected && !isScanning) scanBtn.click();
             }, 4000);
@@ -326,6 +380,7 @@ function onResults(results) {
             updateBar(shoulderBar, shoulderVal, 0);
             updateIntegrity(0);
             updateMobileStats(0, 0, 0);
+            stopVitalsMonitor();
         }
     }
     canvasCtx.restore();
@@ -418,6 +473,20 @@ function performScan() {
         modalSymmetryVal.style.color = liveSymmetry < 70 ? 'var(--danger)' : 'var(--primary)';
         modalKineticVal.textContent = kineticState;
         modalKineticVal.style.color = kineticState === "HIGH MOTION" ? 'var(--warning)' : 'var(--primary)';
+
+        // Populate vitals in modal
+        if (modalHrVal) {
+            modalHrVal.textContent = `${liveHR} BPM`;
+            modalHrVal.style.color = liveHR > 100 ? 'var(--danger)' : 'var(--primary)';
+        }
+        if (modalSpo2Val) {
+            modalSpo2Val.textContent = `${liveSpo2}%`;
+            modalSpo2Val.style.color = liveSpo2 < 95 ? 'var(--danger)' : 'var(--primary)';
+        }
+        if (modalBpVal) {
+            modalBpVal.textContent = `${liveSys}/${liveDia}`;
+            modalBpVal.style.color = liveSys > 140 ? 'var(--danger)' : liveSys > 130 ? 'var(--warning)' : 'var(--primary)';
+        }
 
         // Generate real diagnosis from actual measured angles
         let diagnosis = '';

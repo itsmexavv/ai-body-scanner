@@ -106,6 +106,24 @@
             <!-- Right Panel: Diagnostics -->
             <aside class="panel right-panel" id="right-panel">
                 <div class="panel-box">
+                    <h2>VITAL SIGNS</h2>
+                    <div class="vitals-hud">
+                        <div class="vital-hud-item">
+                            <span class="vital-label">HEART RATE</span>
+                            <span class="vital-val" id="hud-hr-val">-- BPM</span>
+                        </div>
+                        <div class="vital-hud-item">
+                            <span class="vital-label">SpO2 (OXYGEN)</span>
+                            <span class="vital-val" id="hud-spo2-val">--%</span>
+                        </div>
+                        <div class="vital-hud-item">
+                            <span class="vital-label">BLOOD PRESSURE</span>
+                            <span class="vital-val" id="hud-bp-val" style="font-size:1rem;">--/--</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="panel-box">
                     <h2>ADVANCED KINEMATICS</h2>
                     <div class="vitals-hud">
                         <div class="vital-hud-item">
@@ -174,8 +192,22 @@
     <!-- Medical Report Modal -->
     <div id="report-modal" class="modal hidden">
         <div class="modal-content">
-            <h2 class="modal-title">KINEMATIC ANALYSIS COMPLETE</h2>
-            <div class="vitals-grid">
+            <h2 class="modal-title">FULL BIOSCAN REPORT</h2>
+            <div class="vitals-grid" style="grid-template-columns: repeat(3, 1fr);">
+                <div class="vital-box">
+                    <span class="vital-label">HEART RATE</span>
+                    <span class="vital-val" id="modal-hr-val">-- BPM</span>
+                </div>
+                <div class="vital-box">
+                    <span class="vital-label">SpO2</span>
+                    <span class="vital-val" id="modal-spo2-val">--%</span>
+                </div>
+                <div class="vital-box">
+                    <span class="vital-label">BLOOD PRESSURE</span>
+                    <span class="vital-val" id="modal-bp-val" style="font-size:1rem;">--/--</span>
+                </div>
+            </div>
+            <div class="vitals-grid" style="grid-template-columns: repeat(3, 1fr);">
                 <div class="vital-box">
                     <span class="vital-label">CORE STABILITY</span>
                     <span class="vital-val" id="modal-stability-val">--%</span>
@@ -186,7 +218,7 @@
                 </div>
                 <div class="vital-box">
                     <span class="vital-label">KINETIC STATE</span>
-                    <span class="vital-val" id="modal-kinetic-val" style="font-size:1.2rem;">--</span>
+                    <span class="vital-val" id="modal-kinetic-val" style="font-size:1rem;">--</span>
                 </div>
             </div>
             <div class="recommendation-box">
