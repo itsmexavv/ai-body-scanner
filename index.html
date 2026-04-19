@@ -85,19 +85,19 @@
             <!-- Right Panel: Diagnostics -->
             <aside class="panel right-panel">
                 <div class="panel-box">
-                    <h2>LIVE BIO-METRICS</h2>
+                    <h2>ADVANCED KINEMATICS</h2>
                     <div class="vitals-hud">
                         <div class="vital-hud-item">
-                            <span class="vital-label">HEART RATE</span>
-                            <span class="vital-val" id="hud-hr-val">-- BPM</span>
+                            <span class="vital-label">CORE STABILITY</span>
+                            <span class="vital-val" id="hud-stability-val">--%</span>
                         </div>
                         <div class="vital-hud-item">
-                            <span class="vital-label">OXYGEN (SpO2)</span>
-                            <span class="vital-val" id="hud-spo2-val">-- %</span>
+                            <span class="vital-label">SYMMETRY INDEX</span>
+                            <span class="vital-val" id="hud-symmetry-val">--%</span>
                         </div>
                         <div class="vital-hud-item">
-                            <span class="vital-label">BLOOD PRESSURE</span>
-                            <span class="vital-val" id="hud-bp-val">--/--</span>
+                            <span class="vital-label">KINETIC STATE</span>
+                            <span class="vital-val" id="hud-kinetic-val" style="font-size:1.1rem;">--</span>
                         </div>
                     </div>
                     <button id="flip-camera-btn" class="scan-btn" style="margin-top: 15px;">FLIP CAMERA</button>
@@ -124,19 +124,19 @@
     <!-- Medical Report Modal -->
     <div id="report-modal" class="modal hidden">
         <div class="modal-content">
-            <h2 class="modal-title">MEDICAL ANALYSIS COMPLETE</h2>
+            <h2 class="modal-title">KINEMATIC ANALYSIS COMPLETE</h2>
             <div class="vitals-grid">
                 <div class="vital-box">
-                    <span class="vital-label">HEART RATE</span>
-                    <span class="vital-val" id="hr-val">-- BPM</span>
+                    <span class="vital-label">CORE STABILITY</span>
+                    <span class="vital-val" id="modal-stability-val">--%</span>
                 </div>
                 <div class="vital-box">
-                    <span class="vital-label">OXYGEN (SpO2)</span>
-                    <span class="vital-val" id="spo2-val">-- %</span>
+                    <span class="vital-label">SYMMETRY INDEX</span>
+                    <span class="vital-val" id="modal-symmetry-val">--%</span>
                 </div>
                 <div class="vital-box">
-                    <span class="vital-label">BLOOD PRESSURE</span>
-                    <span class="vital-val" id="bp-val">--/--</span>
+                    <span class="vital-label">KINETIC STATE</span>
+                    <span class="vital-val" id="modal-kinetic-val" style="font-size:1.2rem;">--</span>
                 </div>
             </div>
             <div class="recommendation-box">

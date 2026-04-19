@@ -28,14 +28,20 @@ let autoScanTimeout = null;
 const scanBtn = document.getElementById('scan-btn');
 const reportModal = document.getElementById('report-modal');
 const closeModalBtn = document.getElementById('close-modal-btn');
-const hrVal = document.getElementById('hr-val');
-const spo2Val = document.getElementById('spo2-val');
-const bpVal = document.getElementById('bp-val');
+const modalStabilityVal = document.getElementById('modal-stability-val');
+const modalSymmetryVal = document.getElementById('modal-symmetry-val');
+const modalKineticVal = document.getElementById('modal-kinetic-val');
 const medAdvice = document.getElementById('med-advice');
 
-const hudHrVal = document.getElementById('hud-hr-val');
-const hudSpo2Val = document.getElementById('hud-spo2-val');
-const hudBpVal = document.getElementById('hud-bp-val');
+const hudStabilityVal = document.getElementById('hud-stability-val');
+const hudSymmetryVal = document.getElementById('hud-symmetry-val');
+const hudKineticVal = document.getElementById('hud-kinetic-val');
+
+// Metrics State
+let noseHistory = [];
+let liveStability = 100;
+let liveSymmetry = 100;
+let kineticState = "STATIONARY";
 const flipCameraBtn = document.getElementById('flip-camera-btn');
 
 function addLog(message, type = 'info') {
@@ -168,6 +174,38 @@ function onResults(results) {
             latestOverallScore = overallScore;
             updateIntegrity(overallScore);
 
+            // Calculate Advanced Kinematics (Accurate)
+            noseHistory.push({x: nose.x, y: nose.y});
+            if (noseHistory.length > 30) noseHistory.shift();
+            
+            let totalMovement = 0;
+            for(let i=1; i<noseHistory.length; i++) {
+                totalMovement += Math.abs(noseHistory[i].x - noseHistory[i-1].x) + Math.abs(noseHistory[i].y - noseHistory[i-1].y);
+            }
+            
+            // Stability translates inversely to movement
+            liveStability = Math.max(0, 100 - (totalMovement * 300));
+            
+            if (totalMovement < 0.05) kineticState = "STATIONARY";
+            else if (totalMovement < 0.15) kineticState = "ACTIVE";
+            else kineticState = "HIGH SWAY";
+            
+            // Calculate Symmetry Index accurately using angles
+            const shoulderAngle = Math.abs(Math.atan2(rightShoulder.y - leftShoulder.y, rightShoulder.x - leftShoulder.x) * 180 / Math.PI);
+            liveSymmetry = Math.max(0, 100 - (shoulderAngle * 4)); // 25 degree tilt = 0% symmetry
+
+            // Update live HUD
+            if (!isScanning) {
+                hudStabilityVal.textContent = `${Math.round(liveStability)}%`;
+                hudStabilityVal.style.color = liveStability < 50 ? 'var(--danger)' : 'var(--primary)';
+                
+                hudSymmetryVal.textContent = `${Math.round(liveSymmetry)}%`;
+                hudSymmetryVal.style.color = liveSymmetry < 70 ? 'var(--danger)' : 'var(--primary)';
+                
+                hudKineticVal.textContent = kineticState;
+                hudKineticVal.style.color = kineticState === "HIGH SWAY" ? 'var(--warning)' : 'var(--primary)';
+            }
+
             // Determine Status Alert
             if (overallScore < 50) {
                 alertContent.textContent = "CRITICAL POSTURE FAILURE";
@@ -203,9 +241,10 @@ function onResults(results) {
             scanBtn.disabled = true;
             scanBtn.textContent = "AWAITING SUBJECT";
             
-            hudHrVal.textContent = "-- BPM";
-            hudSpo2Val.textContent = "-- %";
-            hudBpVal.textContent = "--/--";
+            hudStabilityVal.textContent = "--%";
+            hudSymmetryVal.textContent = "--%";
+            hudKineticVal.textContent = "--";
+            noseHistory = [];
             
             // Reset bars
             updateBar(neckBar, neckVal, 0);
@@ -294,35 +333,22 @@ scanBtn.addEventListener('click', () => {
 
     // Simulate 3 seconds of scanning
     setTimeout(() => {
-        // Generate simulated vitals based roughly on posture score
-        const stressFactor = (100 - latestOverallScore) / 100; // 0 (good) to 1 (bad)
+        modalStabilityVal.textContent = `${Math.round(liveStability)}%`;
+        modalStabilityVal.style.color = liveStability < 50 ? 'var(--danger)' : 'var(--primary)';
 
-        // Heart Rate: Base 65-75, increases with stress
-        const hr = Math.floor(65 + (Math.random() * 10) + (stressFactor * 40));
-        
-        // SpO2: Base 98-100, decreases with stress
-        const spo2 = Math.max(92, Math.floor(99 - (stressFactor * 5) - (Math.random() * 2)));
-        
-        // Blood Pressure: Base 115/75, increases with stress
-        const sys = Math.floor(115 + (Math.random() * 10) + (stressFactor * 30));
-        const dia = Math.floor(75 + (Math.random() * 8) + (stressFactor * 20));
+        modalSymmetryVal.textContent = `${Math.round(liveSymmetry)}%`;
+        modalSymmetryVal.style.color = liveSymmetry < 70 ? 'var(--danger)' : 'var(--primary)';
 
-        hrVal.textContent = `${hr} BPM`;
-        hrVal.style.color = hr > 95 ? 'var(--danger)' : 'var(--primary)';
+        modalKineticVal.textContent = kineticState;
+        modalKineticVal.style.color = kineticState === "HIGH SWAY" ? 'var(--warning)' : 'var(--primary)';
 
-        spo2Val.textContent = `${spo2} %`;
-        spo2Val.style.color = spo2 < 95 ? 'var(--danger)' : 'var(--primary)';
-
-        bpVal.textContent = `${sys}/${dia}`;
-        bpVal.style.color = sys > 135 ? 'var(--danger)' : 'var(--primary)';
-
-        // Determine AI Advice
-        if (hr > 100 || sys > 140) {
-            medAdvice.innerHTML = "<span style='color:var(--danger)'><b>POSSIBLE CONDITION:</b> Acute Stress Response / Pre-Hypertension</span><br><br><b>RECOMMENDED ADVICE:</b> Immediate rest recommended. Hydrate with 500ml water. Consider a beta-blocker if chronic tachycardia exists (Consult Physician). Practice deep breathing for 5 minutes.";
-        } else if (spo2 < 95 || latestOverallScore < 60) {
-            medAdvice.innerHTML = "<span style='color:var(--warning)'><b>POSSIBLE CONDITION:</b> Hypoxia-induced Fatigue / Severe Postural Kyphosis (Tech Neck)</span><br><br><b>RECOMMENDED ADVICE:</b> Correct posture immediately to open airways. Stand up and stretch. If asthmatic, ensure bronchodilator is accessible.";
+        // Determine AI Advice based on REAL Kinematics
+        if (liveStability < 50 || kineticState === "HIGH SWAY") {
+            medAdvice.innerHTML = "<span style='color:var(--danger)'><b>POSSIBLE CONDITION:</b> Postural Instability / High Kinetic Sway</span><br><br><b>RECOMMENDED ADVICE:</b> Ground your feet firmly. Engage core muscles to reduce unnecessary lateral movement.";
+        } else if (liveSymmetry < 80 || latestOverallScore < 70) {
+            medAdvice.innerHTML = "<span style='color:var(--warning)'><b>POSSIBLE CONDITION:</b> Muscular Asymmetry / Spinal Deviation</span><br><br><b>RECOMMENDED ADVICE:</b> Evenly distribute weight across both legs. Avoid leaning to one side. Consider ergonomic adjustments if seated.";
         } else {
-            medAdvice.innerHTML = "<span style='color:var(--secondary)'><b>POSSIBLE CONDITION:</b> Optimal Biomechanical & Physiological State</span><br><br><b>RECOMMENDED ADVICE:</b> Maintain current ergonomic posture. Continue daily multivitamin regimen (Vitamin D3, B12). No pharmacological intervention required.";
+            medAdvice.innerHTML = "<span style='color:var(--secondary)'><b>POSSIBLE CONDITION:</b> Optimal Kinematic Balance</span><br><br><b>RECOMMENDED ADVICE:</b> Perfect structural symmetry detected. Maintain current biomechanical state.";
         }
 
         reportModal.classList.remove('hidden');
@@ -342,25 +368,3 @@ scanBtn.addEventListener('click', () => {
 closeModalBtn.addEventListener('click', () => {
     reportModal.classList.add('hidden');
 });
-
-// Live Vitals HUD Loop
-setInterval(() => {
-    if (isSubjectDetected && !isScanning) {
-        const stressFactor = (100 - latestOverallScore) / 100;
-        
-        // Slight natural fluctuations
-        const hr = Math.floor(65 + (Math.random() * 5) + (stressFactor * 30));
-        const spo2 = Math.max(93, Math.floor(99 - (stressFactor * 5) - (Math.random() * 1)));
-        const sys = Math.floor(115 + (Math.random() * 5) + (stressFactor * 25));
-        const dia = Math.floor(75 + (Math.random() * 5) + (stressFactor * 15));
-
-        hudHrVal.textContent = `${hr} BPM`;
-        hudHrVal.style.color = hr > 95 ? 'var(--danger)' : 'var(--primary)';
-
-        hudSpo2Val.textContent = `${spo2} %`;
-        hudSpo2Val.style.color = spo2 < 95 ? 'var(--danger)' : 'var(--primary)';
-
-        hudBpVal.textContent = `${sys}/${dia}`;
-        hudBpVal.style.color = sys > 135 ? 'var(--danger)' : 'var(--primary)';
-    }
-}, 2000);
