@@ -195,7 +195,7 @@ function analyzeBiomechanics(landmarks) {
 
     // ---- 1. SHOULDER TILT (real angle from horizontal) ----
     shoulderTiltDeg = Math.abs(
-        Math.atan2(rightShoulder.y - leftShoulder.y, rightShoulder.x - leftShoulder.x) * 180 / Math.PI
+        Math.atan((rightShoulder.y - leftShoulder.y) / (rightShoulder.x - leftShoulder.x)) * 180 / Math.PI
     );
     // Perfect = 0°, map 0-15° → 100-0%
     const shoulderScore = Math.max(0, 100 - (shoulderTiltDeg / 15) * 100);
@@ -231,7 +231,7 @@ function analyzeBiomechanics(landmarks) {
             totalJitter += Math.abs(noseHistory[i].x - noseHistory[i - 1].x)
                         + Math.abs(noseHistory[i].y - noseHistory[i - 1].y);
         }
-        totalJitter /= noseHistory.length;
+        totalJitter /= (noseHistory.length - 1);
     }
     // Map jitter: 0 = perfectly still (100%), 0.015+ = very shaky (0%)
     liveStability = Math.max(0, Math.min(100, 100 - (totalJitter / 0.015) * 100));
@@ -252,9 +252,9 @@ function analyzeBiomechanics(landmarks) {
     }
     // Knee angle symmetry
     if (vis(leftKnee) && vis(rightKnee) && vis(leftHip) && vis(rightHip)) {
-        const leftKneeAngle = calcAngle(leftHip, leftKnee, landmarks[27]); // left ankle
-        const rightKneeAngle = calcAngle(rightHip, rightKnee, landmarks[28]);
         if (vis(landmarks[27]) && vis(landmarks[28])) {
+            const leftKneeAngle = calcAngle(leftHip, leftKnee, landmarks[27]); // left ankle
+            const rightKneeAngle = calcAngle(rightHip, rightKnee, landmarks[28]);
             symFactors.push(1 - Math.min(1, Math.abs(leftKneeAngle - rightKneeAngle) / 45));
         }
     }
@@ -269,7 +269,7 @@ function analyzeBiomechanics(landmarks) {
         for (let i = 1; i < recent.length; i++) {
             velocity += dist(recent[i], recent[i - 1]);
         }
-        velocity /= recent.length;
+        velocity /= (recent.length - 1);
         if (velocity < 0.002) kineticState = "STATIONARY";
         else if (velocity < 0.008) kineticState = "MICRO-SWAY";
         else if (velocity < 0.02) kineticState = "ACTIVE";

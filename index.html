@@ -1,17 +1,20 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="mobile-web-app-capable" content="yes">
-    <meta name="description" content="BioScan - AI-powered real-time body posture and biomechanical analysis using computer vision">
+    <meta name="description"
+        content="BioScan - AI-powered real-time body posture and biomechanical analysis using computer vision">
     <title>BioScan - AI Body Analyzer</title>
     <link rel="stylesheet" href="style.css">
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap" rel="stylesheet">
 </head>
+
 <body>
     <!-- Loading Screen -->
     <div id="loading-screen" class="loading-screen">
@@ -30,7 +33,8 @@
         <div class="prompt-content">
             <div class="prompt-icon">📷</div>
             <h2>CAMERA ACCESS REQUIRED</h2>
-            <p>BioScan needs camera access to perform real-time body analysis. Tap the button below and allow camera permissions.</p>
+            <p>BioScan needs camera access to perform real-time body analysis. Tap the button below and allow camera
+                permissions.</p>
             <button id="grant-camera-btn" class="scan-btn pulse-btn">ACTIVATE CAMERA</button>
         </div>
     </div>
@@ -51,17 +55,23 @@
                     <h2>POSTURE METRICS</h2>
                     <div class="metric">
                         <span>Neck Alignment</span>
-                        <div class="bar-container"><div id="neck-bar" class="bar"></div></div>
+                        <div class="bar-container">
+                            <div id="neck-bar" class="bar"></div>
+                        </div>
                         <span id="neck-val">--%</span>
                     </div>
                     <div class="metric">
                         <span>Spine Alignment</span>
-                        <div class="bar-container"><div id="spine-bar" class="bar"></div></div>
+                        <div class="bar-container">
+                            <div id="spine-bar" class="bar"></div>
+                        </div>
                         <span id="spine-val">--%</span>
                     </div>
                     <div class="metric">
                         <span>Shoulder Balance</span>
-                        <div class="bar-container"><div id="shoulder-bar" class="bar"></div></div>
+                        <div class="bar-container">
+                            <div id="shoulder-bar" class="bar"></div>
+                        </div>
                         <span id="shoulder-val">--%</span>
                     </div>
                 </div>
@@ -90,12 +100,12 @@
                     <video id="input-video" class="input_video" autoplay playsinline muted></video>
                     <!-- The canvas where we draw the AI overlay -->
                     <canvas id="output-canvas" class="output_canvas"></canvas>
-                    
+
                     <div class="targeting-reticle top-left"></div>
                     <div class="targeting-reticle top-right"></div>
                     <div class="targeting-reticle bottom-left"></div>
                     <div class="targeting-reticle bottom-right"></div>
-                    
+
                     <div class="scanning-line"></div>
                 </div>
                 <div class="diagnostic-text" id="diagnostic-text">
@@ -149,7 +159,7 @@
                         <li>Camera standing by...</li>
                     </ul>
                 </div>
-                
+
                 <div class="panel-box alert-box" id="alert-box">
                     <h2>STATUS ALERT</h2>
                     <div class="alert-content" id="alert-content">
@@ -163,13 +173,26 @@
     <!-- Mobile Floating Controls -->
     <div class="mobile-controls" id="mobile-controls">
         <button id="mobile-flip-btn" class="mobile-btn" title="Flip Camera">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 7l-4-4-4 4"/><path d="M16 3v10"/><path d="M4 17l4 4 4-4"/><path d="M8 21V11"/></svg>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M20 7l-4-4-4 4" />
+                <path d="M16 3v10" />
+                <path d="M4 17l4 4 4-4" />
+                <path d="M8 21V11" />
+            </svg>
         </button>
         <button id="mobile-scan-btn" class="mobile-btn scan-pulse" title="Deep Scan" disabled>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10" />
+                <path d="M12 6v6l4 2" />
+            </svg>
         </button>
         <button id="mobile-panels-btn" class="mobile-btn" title="Toggle Panels">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="3" width="7" height="7" />
+                <rect x="14" y="3" width="7" height="7" />
+                <rect x="3" y="14" width="7" height="7" />
+                <rect x="14" y="14" width="7" height="7" />
+            </svg>
         </button>
     </div>
 
@@ -231,9 +254,12 @@
 
     <!-- MediaPipe dependencies loaded AFTER the DOM -->
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/control_utils/control_utils.js" crossorigin="anonymous"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/control_utils/control_utils.js"
+        crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js"
+        crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose/pose.js" crossorigin="anonymous"></script>
     <script src="app.js"></script>
 </body>
+
 </html>
